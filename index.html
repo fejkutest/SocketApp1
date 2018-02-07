@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+    <head></head>
+    <body>
+        <ul id="messages"></ul>
+        <form id="f1" action="">
+            name <input type="text" id="name" autocomplete="off"/><button id='btnSend'>Send</button>
+        </form>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+        <script>
+            $(function() {
+                var socket = io();
+                // $('#btnSend').click(function(){
+                //     socket.emit('name', $('#name').val());                    
+                //     return false;
+                // });
+                $('#f1').submit(function(){
+                    socket.emit('name', $('#name').val());    
+                    return false;
+                });   
+                socket.on('status', function(status){
+                    if (status === 'turn')
+                        $('#messages').append($('<li>').text('Moja tura'));
+                    if (status === 'wait')
+                        $('#messages').append($('<li>').text('Czekam'));                    
+                });
+            });
+        </script>
+    </body>
+</html>
