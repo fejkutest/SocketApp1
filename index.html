@@ -1,31 +1,120 @@
 <!doctype html>
 <html>
-    <head></head>
-    <body>
-        <ul id="messages"></ul>
-        <form id="f1" action="">
-            name <input type="text" id="name" autocomplete="off"/><button id='btnSend'>Send</button>
-        </form>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
-        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
-        <script>
-            $(function() {
-                var socket = io();
-                // $('#btnSend').click(function(){
-                //     socket.emit('name', $('#name').val());                    
-                //     return false;
-                // });
-                $('#f1').submit(function(){
-                    socket.emit('name', $('#name').val());    
-                    return false;
-                });   
-                socket.on('status', function(status){
-                    if (status === 'turn')
-                        $('#messages').append($('<li>').text('Moja tura'));
-                    if (status === 'wait')
-                        $('#messages').append($('<li>').text('Czekam'));                    
-                });
+
+<head>
+    <style>
+        #board {
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .board-row {
+            height: 33.3%;
+            display: flex;
+        }
+
+        .field {
+            width: 100%;
+            border: none;
+            background: none;
+            box-shadow: none;
+            border-radius: 0px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .board-row:nth-of-type(2n+1) .field:nth-of-type(2) {
+            border-left: 1px black solid;
+            border-right: 1px black solid;
+        }
+
+        .board-row:nth-of-type(2) .field:nth-of-type(2n+1) {
+            border-top: 1px black solid;
+            border-bottom: 1px black solid;
+        }
+
+        .board-row:nth-of-type(2) .field:nth-of-type(2) {
+            border: 1px black solid;
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="messages"></ul>
+    <form id="f1" action="">
+        name
+        <input type="text" id="name" autocomplete="off" />
+        <button id='btnSend'>Send</button>
+    </form>
+    <div id="board">
+        <div class="board-row">
+            <button class="field" value="0"></button>
+            <button class="field" value="1"></button>
+            <button class="field" value="2"></button>
+        </div>
+        <div class="board-row">
+            <button class="field" value="3"></button>
+            <button class="field" value="4"></button>
+            <button class="field" value="5"></button>
+        </div>
+        <div class="board-row">
+            <button class="field" value="6"></button>
+            <button class="field" value="7"></button>
+            <button class="field" value="8"></button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+        $(function () {
+            var socket = io();
+
+            function setAllFieldDisabled() {
+                $('.field').attr('disabled', true);
+            };
+
+            function findFieldById(id, fields) {
+                for(let field in fields) {
+                    if (field.id === id) {
+                        return field.actual;
+                    }
+                }
+            }
+
+            setAllFieldDisabled();
+
+            $('#f1').submit(function () {
+                socket.emit('name', $('#name').val());
+                return false;
             });
-        </script>
-    </body>
+            $('.field').on('click', function () {
+                socket.emit('turn', $(this).val());
+                $(this).css("background-color", "red");
+                $(this).attr("disabled", true);
+                return false;
+            })
+            socket.on('message', function (obj) {
+                if (obj.status === 'turn') {
+                    $('#messages').append($('<li>').text('Moja tura'));
+                    $('.field').each(function () {
+                        if (findFieldById(parseInt($(this).val()), obj.board.field) === 0) {
+                            $(this).css("background-color", "red");
+                        }
+                        if (findFieldById(parseInt($(this).val()), obj.board.field) === 1) {
+                            $(this).css("background-color", "green");
+                        } else {
+                            $(this).attr("disabled", false);
+                        }
+                    });
+                }
+                if (obj.status === 'wait') {
+                    $('#messages').append($('<li>').text('Czekam'));
+                    setAllFieldDisabled();
+                }
+            });
+        });
+    </script>
+</body>
+
 </html>

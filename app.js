@@ -2,7 +2,15 @@ var app = require('express')(),
     http = require('http').Server(app),
     io = require('socket.io')(http);
 
-// var     
+var Players = require('./Players').Players;
+var Board = require('./Board').Board;
+
+var players;
+var board = new Board();
+
+function checkWinCondition() {
+
+};
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
@@ -13,23 +21,27 @@ io.on('connection', function(socket){
     socket.on('name', function(name){
         //czy podłączono dwóch graczy, TODO zrobić im pokój
         if (Object.keys(io.sockets.sockets).length === 2) {
-            let circlePlayer = Object.keys(io.sockets.sockets)[0];
-            let crossPlayer = Object.keys(io.sockets.sockets)[1];
-console.log('circle: ' + circlePlayer);
-console.log('cross:' + crossPlayer);
-            io.sockets.sockets[circlePlayer].emit('status', 'turn');
-            io.sockets.sockets[crossPlayer].emit('status', 'wait');
-            // Object.keys(io.sockets.sockets).forEach((item) => {
-            //     console.log("general socket: Item:", item);
-            //     io.sockets.sockets[item].emit('status', item);                
-            // });                      
+            players = new Players(Object.keys(io.sockets.sockets));
+            io.sockets.sockets[players.getActivePlayer()].emit('message',  {status: 'turn', board: board});
+            io.sockets.sockets[players.getUnactivePlayer()].emit('message', {status: 'wait'});                   
         }
-        // console.log('length: ' + Object.keys(io.sockets.sockets).length);
-        // console.log('new name: ' + name);
-        // console.log('id: ' + socket.id);
-        // Object.keys(io.sockets.sockets).forEach((item) => {
-        //     console.log("general socket: Item:", item);
-        // });
+    });
+    socket.on('turn', function(move){
+        if ((move>=0) && (move<9)){
+            if (board.field[move] === -1){
+                board.field[move].actual = players.activePlayer;
+                console.log(board);
+
+                checkWinCondition();
+
+                players.changePlayer();
+
+                io.sockets.sockets[players.getActivePlayer()].emit('message',  {status: 'turn', board: board});
+                io.sockets.sockets[players.getUnactivePlayer()].emit('message', {status: 'wait'});
+            } else {
+                console.log('You can\'t make the same move again');
+            }
+        }
     });
 });
 
