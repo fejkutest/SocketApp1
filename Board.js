@@ -12,4 +12,12 @@ function fillBoard() {
     }
 }
 
+Board.prototype.findById = function(id) {
+    for(let field in this.field) {
+        if (field.id = id) {
+            return field.actual;
+        }
+    }
+};
+
 exports.Board = Board;
